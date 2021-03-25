@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Org.BouncyCastle.Crypto.Tls;
 using Renci.SshNet.Messages;
 using System;
@@ -50,13 +50,17 @@ namespace WpfAppCore
 
         private string canInsertNewLand(Land land)
         {
-            if (land.latitude >= 90 || land.latitude <= -90)
+            if (land.latitude > 90 || land.latitude < -90)
             {
                 return "Широта принимает значение в диапозоне от -90 до +90";
             }
-            if (land.longitude >= 180 || land.longitude <= -180)
+            if (land.longitude > 180 || land.longitude < -180)
             {
                 return "Долгота принимает значение в диапозоне от -180 до +180";
+            }
+            if(land.square < 0)
+            {
+                return "Площадь не может быть отрицательной";
             }
             return null;
         }
@@ -107,13 +111,30 @@ namespace WpfAppCore
 
         private string canInsertNewApartment(Apartment apartment)
         {
-            if(apartment.latitude >= 90 || apartment.latitude <= -90)
+            if(apartment.latitude > 90 || apartment.latitude < -90)
             {
                 return "Широта принимает значение в диапозоне от -90 до +90";
             }
-            if(apartment.longitude >= 180 || apartment.longitude <= -180)
+            if(apartment.longitude > 180 || apartment.longitude < -180)
             {
                 return "Долгота принимает значение в диапозоне от -180 до +180";
+            }
+            if (apartment.square < 0)
+            {
+                return "Площадь не может быть отрицательной";
+            }
+
+            if(Convert.ToInt32(apartment.houseNumber) < 0)
+            {
+                return "Номер дома не может быть отрицательым";
+            }
+            if (Convert.ToInt32(apartment.apartmentNumber) < 0)
+            {
+                return "Номер квартиры не может быть отрицательым";
+            }
+            if(apartment.roomsAmount <= 0)
+            {
+                return "Количество комнат не может быть отрицательным или равняться нулю";
             }
             return null;
         }
@@ -165,13 +186,34 @@ namespace WpfAppCore
 
         private string canInsertNewHouse(House house)
         {
-            if (house.latitude >= 90 || house.latitude <= -90)
+            if (house.latitude > 90 || house.latitude < -90)
             {
                 return "Широта принимает значение в диапозоне от -90 до +90";
             }
-            if (house.longitude >= 180 || house.longitude <= -180)
+            if (house.longitude > 180 || house.longitude < -180)
             {
                 return "Долгота принимает значение в диапозоне от -180 до +180";
+            }
+            if (house.square < 0)
+            {
+                return "Площадь не может быть отрицательной";
+            }
+
+            if (Convert.ToInt32(house.houseNumber) < 0)
+            {
+                return "Номер дома не может быть отрицательым";
+            }
+            if (Convert.ToInt32(house.apartmentNumber) < 0)
+            {
+                return "Номер квартиры не может быть отрицательым";
+            }
+            if (house.roomsAmount <= 0)
+            {
+                return "Количество комнат не может быть отрицательным или равняться нулю";
+            }
+            if(house.floorsAmount <= 0) 
+            {
+                return "Количество этажей не може быть отрицательным или равняться нулю";
             }
             return null;
         }
@@ -226,11 +268,15 @@ namespace WpfAppCore
 
         private void SearchByAdress_Click(object sender, RoutedEventArgs e)
         {
+            BindingList<IRealty> sr = new BindingList<IRealty>();
+            searchGrid.ItemsSource = sr;
+            sr.Clear();
             ArrayList result = new ArrayList();
             ArrayList all = new ArrayList();
             all.AddRange(db.Lands.Local.ToList());
             all.AddRange(db.Apartments.Local.ToList());
             all.AddRange(db.Houses.Local.ToList());
+            db.Houses.Where(p => p.city == "city");
 
             string adress = cityText.Text.Trim().ToLower() + streetText.Text.Trim().ToLower() + houseNumberText.Text.Trim().ToLower() + apartmentNumberText.Text.Trim().ToLower();
             //string fioSearch = name.Text.Trim().ToLower() + lastName.Text.Trim().ToLower() + patronymic.Text.Trim().ToLower();
@@ -243,9 +289,8 @@ namespace WpfAppCore
                         string[] data = Levi.GetLeviData(cityText.Text, streetText.Text, houseNumberText.Text, apartmentNumberText.Text, (IRealty)item);
                         if (Levi.LevenshteinDistance(data[0], data[1]) <= 3)
                         {
-                            
-                             result.Add(item as IRealty);
-                            searchGrid.ItemsSource =result;
+
+                            sr.Add(item as IRealty);
                         }
                     }
 
